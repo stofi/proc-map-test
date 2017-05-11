@@ -1,21 +1,75 @@
-'use strict'
-const DIAMETER = 12,
+/* Tak tady bych Tě opravdu nečekal, chceš věděť odkud jsem to zkopíroval viď?
+/* Chceš se dozvědět, jak dlouho jsem musel listovat Stackoverflow.com,
+/* než jsem našel odpověď na otázku "Jak v JavaScriptu naprogramovat
+/* procedurálně generovanou mapu, umístěnou do hexagonální mřížky?"
+/* Z kolik repozitářů na GitHubu jsem musel kopírovat kusy kódu doufaje, že
+/* bude fungovat, aniž bych musel něco složitě upravovat nebo nad něčím
+/* dlouze přemýšlet?
+/* Odpověď na tyhle otázky se tady nedovíš. Můžu se ti, ale pokusit vysvětlit,
+/* jak to funguje.
+*/
+
+/* Tohle si vymysleli programátoři JavaScriptu, když se jim ostatní programátoři
+/* smáli, že JavaScript není dostatečně vážný programovací jazyk.
+/* Když napíšeš nazačátek */ 'use strict' /* pořád se ti budou smát, ale tvůj
+/* kód bude o 42% přísnější.
+*/
+
+/* Ok, co dál?
+/* nejdřív si pojmenuju pár čísel: */
+const RADIUS = 12,
       MAX_ELEVATION = 100,
-      RANDOMNESS = .5
+      ELEVATION_STEP = .3,
+      RANDOMNESS = .2,
+      SIZE = 25
 
+/* A konečně funkce main, kde se dějí ta kouzla: */
 function main() {
+  /* Protože chci, aby počítač nakreslil mapu imaginárního ostrova,
+  /* musím mu nejdřív říct, kde má plátno */
   var canvas = document.getElementById('canvas')
+  /* když pochopí, že plátnem myslím tu obroskou bílou plochu na obrazovse,
+  /* musím ještě vysvětlit, aby kreslil ve 2D. */
   var ctx = canvas.getContext('2d')
-  var map = new Map(DIAMETER, ctx)
+  /* Vytvořím si novou mapu o poloměrem RADIUS */
+  var map = new Map(RADIUS, ctx)
 
+  /* Mimochodem...
+  /* V programování je nevětší hřích lenost, líní programátoři se vyznačují tím,
+  /* že se neradi opakují. Proti lenosti se, ale dá bojovat. */
+
+  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
   map.randomHexagon().elevation = MAX_ELEVATION
+  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
+  map.randomHexagon().elevation = MAX_ELEVATION
+  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
+  map.randomHexagon().elevation = MAX_ELEVATION
+  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
+  map.randomHexagon().elevation = MAX_ELEVATION
+  // 💦
 
-  for (var i = 0; i < 10000; i++) {
-    map.elevate(map.randomHexagon())
-  }
-  map.draw(25)
+  // Potom nastavím výšku všem ostatním šestiúhelníkům
+  map.elevateAll()
+
+  // A nakonec mapu nakreslím.
+  map.draw(SIZE)
+  // Je slušné vracet věci, které jste si půjčili.
   return map;
 }
+/* Docela jednoduché, ne?
+/* Jak říkám, programovat zvládne každý, stačí chtít.
+/*
+/* Hmm... Ok, pár věcí jsem zatajil. Vlastně všechno. 
+/*
+/*
+/*
+/*
+/*
+/*
+/*
+/*
+*/
+
 
 function shuffle(array) {
   var a = array.slice()
@@ -53,7 +107,7 @@ class Hexagon {
   }
 
   drawPixels(h){
-    var size = h
+    var size = h*1.01
     var angle_deg, angle_rad
     this.context.save()
 
@@ -74,16 +128,22 @@ class Hexagon {
 
   //  this.context.stroke()
 
-    var color = DIAMETER * 2 + 1
-    var red = Math.floor(255/color * ( + DIAMETER))
-    var blue = Math.floor(255/color * (this.y + DIAMETER))
-    var green = Math.floor(255/color * (this.z + DIAMETER))
+    var color = RADIUS * 2 + 1
+    var red = Math.floor(255/color * ( + RADIUS))
+    var blue = Math.floor(255/color * (this.y + RADIUS))
+    var green = Math.floor(255/color * (this.z + RADIUS))
 
     this.context.fillStyle = 'rgb(' + red + ', ' + blue + ', ' + green + ')'
 
     if (this.elevation != null) {
-      var shade = 255-Math.floor(255/MAX_ELEVATION*this.elevation)
+      var shade = Math.floor(255/MAX_ELEVATION*this.elevation)
       this.context.fillStyle = 'rgb(' + shade + ', ' + shade + ', ' + shade + ')'
+      if(this.elevation < 50){
+
+      }
+      if(this.elevation == Math.floor(MAX_ELEVATION/10)){
+        this.context.fillStyle = '#273ecc'
+      }
     }
 
 
@@ -105,6 +165,8 @@ class Map {
     this.hexagons = {}
     this.keys = []
     this.populate()
+    this.keysFlat = this.keys
+    this.waterEdges()
   }
 
   populate(){
@@ -115,6 +177,23 @@ class Map {
             this.hexagons[this.hash(x,y,z)] = new Hexagon(x,y,z, this.context, this)
             this.keys.push(this.hash(x,y,z))
           }
+        }
+      }
+    }
+  }
+
+  waterEdges(){
+    var hex = null
+    for (var hexa in this.hexagons) {
+      if (this.hexagons.hasOwnProperty(hexa)) {
+        hex = this.hexagons[hexa]
+        if (hex.x == this.size ||
+            hex.x == -this.size ||
+            hex.y ==  this.size ||
+            hex.y == -this.size ||
+            hex.z ==  this.size ||
+            hex.z == -this.size ) {
+          hex.elevation = Math.floor(MAX_ELEVATION/10)
         }
       }
     }
@@ -131,15 +210,12 @@ class Map {
   }
 
   randomHexagon(){
-    var z = Math.floor(Math.random()*(DIAMETER*2))-DIAMETER
-    var x = DIAMETER - Math.floor(Math.random()*( DIAMETER*2-Math.abs(z) ))
-    var y = - x - z;
-
-    var hex = this.getHexagon(x,y,z);
-
-    if ((x+y+z) == 0 && hex == null){
-      return this.randomHexagon()
-    } else return hex
+    var shuffled = shuffle(this.keys)
+    return this.hexagons[shuffled[0]]
+  }
+  randomFlat(){
+    var shuffled = shuffle(this.keysFlat)
+    return this.hexagons[shuffled[0]]
   }
 
   draw(width){
@@ -177,7 +253,14 @@ class Map {
     return result;
   }
 
-  elevate(hex){
+  elevateAll(){
+    for (var i = 0; i < 10000 && this.keysFlat.length>0; i++) {
+      this.elevate()
+    }
+  }
+
+  elevate(){
+    var hex = this.randomFlat()
     var neighbours = [];
     var elevation = null;
     var result = false;
@@ -187,14 +270,17 @@ class Map {
       if(neighbours != []){
         for (var i = 0; i < neighbours.length; i++) {
           if (elevation == null && neighbours[i].elevation != null) {
-            elevation = Math.floor(neighbours[i].elevation*.9 + Math.random()*neighbours[i].elevation*.1)
-          } else if (neighbours[i].elevation != null && neighbours[i].elevation < elevation*.9 ){
-            elevation = Math.floor(Math.random()*neighbours[i].elevation*.9)
+            elevation = Math.floor(neighbours[i].elevation*(1-ELEVATION_STEP) + Math.random()*neighbours[i].elevation*(ELEVATION_STEP))
+          } else if (neighbours[i].elevation != null && neighbours[i].elevation < elevation*(1-ELEVATION_STEP) ){
+            // elevation = Math.floor(Math.random()*neighbours[i].elevation*(1-ELEVATION_STEP))
+            elevation = Math.floor((Math.random()*neighbours[i].elevation+elevation)/2)
           }
         }
         if (elevation != null) {
           hex.elevation = elevation
-          console.log(elevation);
+          if (elevation < MAX_ELEVATION/10) {
+             hex.elevation = Math.floor(MAX_ELEVATION/10)
+          }
 
           neighbours = neighbours.filter(function(neighbour){
             return neighbours.elevation == null;
@@ -204,6 +290,9 @@ class Map {
             this.elevate(neighbours[Math.floor(Math.random()*(neighbours.length-1))])
           }
           result = true
+          this.keysFlat = this.keysFlat.filter((key)=>{
+            return key != ("hex_"+(1000-hex.x)+(1000-hex.y)+(1000-hex.z))
+          })
         }
 
       }
