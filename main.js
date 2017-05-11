@@ -17,11 +17,11 @@
 
 /* Ok, co dál?
 /* nejdřív si pojmenuju pár čísel: */
-const RADIUS = 12,
-      MAX_ELEVATION = 100,
-      ELEVATION_STEP = .3,
-      RANDOMNESS = .2,
-      SIZE = 25
+const RADIUS = 21,          // Radius of the hexagonal map
+      MAX_ELEVATION = 100,  // Number of possible elevations
+      ELEVATION_STEP = .1,  // 0 - table mountain island, 1 isolated peaks
+      RANDOMNESS = .2,      // 0 - very rough and diconected shapes, 1 - smooth continuous islands
+      SIZE = 20             // Radius of one hex in px
 
 /* A konečně funkce main, kde se dějí ta kouzla: */
 function main() {
@@ -39,13 +39,21 @@ function main() {
   /* že se neradi opakují. Proti lenosti se, ale dá bojovat. */
 
   // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
-  map.randomHexagon().elevation = MAX_ELEVATION
+  map.randomFlat().elevation = MAX_ELEVATION
   // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
-  map.randomHexagon().elevation = MAX_ELEVATION
+  map.randomFlat().elevation = MAX_ELEVATION
   // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
-  map.randomHexagon().elevation = MAX_ELEVATION
+  map.randomFlat().elevation = MAX_ELEVATION
   // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
-  map.randomHexagon().elevation = MAX_ELEVATION
+  map.randomFlat().elevation = MAX_ELEVATION
+  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
+  map.randomFlat().elevation = MAX_ELEVATION
+  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
+  map.randomFlat().elevation = MAX_ELEVATION
+  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
+  map.randomFlat().elevation = MAX_ELEVATION
+  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
+  map.randomFlat().elevation = MAX_ELEVATION
   // 💦
 
   // Potom nastavím výšku všem ostatním šestiúhelníkům
@@ -59,7 +67,7 @@ function main() {
 /* Docela jednoduché, ne?
 /* Jak říkám, programovat zvládne každý, stačí chtít.
 /*
-/* Hmm... Ok, pár věcí jsem zatajil. Vlastně všechno. 
+/* Hmm... Ok, pár věcí jsem zatajil. Vlastně všechno.
 /*
 /*
 /*
@@ -78,6 +86,12 @@ function shuffle(array) {
       [a[i - 1], a[j]] = [a[j], a[i - 1]];
   }
   return a;
+}
+
+function MyError(message) {
+  this.name = 'err';
+  this.message = message;
+  this.stack = (new Error()).stack;
 }
 
 
@@ -167,6 +181,7 @@ class Map {
     this.populate()
     this.keysFlat = this.keys
     this.waterEdges()
+    this.keys = shuffle(this.keys)
   }
 
   populate(){
@@ -194,6 +209,9 @@ class Map {
             hex.z ==  this.size ||
             hex.z == -this.size ) {
           hex.elevation = Math.floor(MAX_ELEVATION/10)
+          this.keysFlat = this.keysFlat.filter((key)=>{
+            return key != ("hex_"+(1000-hex.x)+(1000-hex.y)+(1000-hex.z))
+          })
         }
       }
     }
@@ -218,13 +236,35 @@ class Map {
     return this.hexagons[shuffled[0]]
   }
 
-  draw(width){
-    for (var key in this.hexagons) {
-      if (this.hexagons.hasOwnProperty(key)) {
-        this.hexagons[key].draw(width)
+  loopByHash(f){
+    for (var i = 0; i < this.keys.length; i++) {
+      // console.log(this.keys[i]);
+      if (this.hexagons.hasOwnProperty(this.keys[i])) {
+        f(this.hexagons[this.keys[i]])
       }
     }
   }
+
+  loopByGrid(f){
+    var z,x,y = 0;
+    var start = 0;
+    for (z = -RADIUS; z <= RADIUS; z++) {
+      start = (z > 0) ? -RADIUS : -(z+RADIUS)
+      for (x = start; x < start+(RADIUS*2+1)+Math.abs(z); x++) {
+        y = 0 -x -z;
+        if (this.hexagons.hasOwnProperty(this.hash(x,y,z))) {
+          f(this.hexagons[this.hash(x,y,z)])
+        }
+      }
+    }
+  }
+
+  draw(width){
+    this.loopByGrid((hex)=>{
+      hex.draw(width)
+    })
+  }
+
   getNeigbours(parent){
     var x = parent.x;
     var y = parent.y;
@@ -255,12 +295,16 @@ class Map {
 
   elevateAll(){
     for (var i = 0; i < 10000 && this.keysFlat.length>0; i++) {
-      this.elevate()
+      this.elevate(this.randomFlat())
     }
+    // this.loopByGrid((h)=>{
+    //   if (h.elevation == null) {
+    //     h.elevation = Math.floor(MAX_ELEVATION/10)
+    //   }
+    // })
   }
 
-  elevate(){
-    var hex = this.randomFlat()
+  elevate(hex){
     var neighbours = [];
     var elevation = null;
     var result = false;
@@ -289,6 +333,12 @@ class Map {
           if(neighbours != [] && Math.random() > RANDOMNESS){
             this.elevate(neighbours[Math.floor(Math.random()*(neighbours.length-1))])
           }
+
+
+          // debugger
+          hex.draw(SIZE)
+
+
           result = true
           this.keysFlat = this.keysFlat.filter((key)=>{
             return key != ("hex_"+(1000-hex.x)+(1000-hex.y)+(1000-hex.z))
