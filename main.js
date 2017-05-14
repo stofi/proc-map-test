@@ -1,82 +1,40 @@
-/* Tak tady bych Tě opravdu nečekal, chceš věděť odkud jsem to zkopíroval viď?
-/* Chceš se dozvědět, jak dlouho jsem musel listovat Stackoverflow.com,
-/* než jsem našel odpověď na otázku "Jak v JavaScriptu naprogramovat
-/* procedurálně generovanou mapu, umístěnou do hexagonální mřížky?"
-/* Z kolik repozitářů na GitHubu jsem musel kopírovat kusy kódu doufaje, že
-/* bude fungovat, aniž bych musel něco složitě upravovat nebo nad něčím
-/* dlouze přemýšlet?
-/* Odpověď na tyhle otázky se tady nedovíš. Můžu se ti, ale pokusit vysvětlit,
-/* jak to funguje.
-*/
+'use strict'
 
-/* Tohle si vymysleli programátoři JavaScriptu, když se jim ostatní programátoři
-/* smáli, že JavaScript není dostatečně vážný programovací jazyk.
-/* Když napíšeš nazačátek */ 'use strict' /* pořád se ti budou smát, ale tvůj
-/* kód bude o 42% přísnější.
-*/
-
-/* Ok, co dál?
-/* nejdřív si pojmenuju pár čísel: */
 const RADIUS = 21,          // Radius of the hexagonal map
       MAX_ELEVATION = 100,  // Number of possible elevations
       ELEVATION_STEP = .1,  // 0 - table mountain island, 1 isolated peaks
       RANDOMNESS = .2,      // 0 - very rough and diconected shapes, 1 - smooth continuous islands
       SIZE = 20             // Radius of one hex in px
 
-/* A konečně funkce main, kde se dějí ta kouzla: */
 function main() {
-  /* Protože chci, aby počítač nakreslil mapu imaginárního ostrova,
-  /* musím mu nejdřív říct, kde má plátno */
+
   var canvas = document.getElementById('canvas')
-  /* když pochopí, že plátnem myslím tu obroskou bílou plochu na obrazovse,
-  /* musím ještě vysvětlit, aby kreslil ve 2D. */
+
   var ctx = canvas.getContext('2d')
-  /* Vytvořím si novou mapu o poloměrem RADIUS */
+
   var map = new Map(RADIUS, ctx)
 
-  /* Mimochodem...
-  /* V programování je nevětší hřích lenost, líní programátoři se vyznačují tím,
-  /* že se neradi opakují. Proti lenosti se, ale dá bojovat. */
 
-  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
   map.randomFlat().elevation = MAX_ELEVATION
-  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
   map.randomFlat().elevation = MAX_ELEVATION
-  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
   map.randomFlat().elevation = MAX_ELEVATION
-  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
   map.randomFlat().elevation = MAX_ELEVATION
-  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
-  map.randomFlat().elevation = MAX_ELEVATION
-  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
-  map.randomFlat().elevation = MAX_ELEVATION
-  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
-  map.randomFlat().elevation = MAX_ELEVATION
-  // Vyberu si náhodný šestiúhelník a nastavím jako výšku na maximum
   map.randomFlat().elevation = MAX_ELEVATION
   // 💦
 
-  // Potom nastavím výšku všem ostatním šestiúhelníkům
   map.elevateAll()
 
-  // A nakonec mapu nakreslím.
   map.draw(SIZE)
-  // Je slušné vracet věci, které jste si půjčili.
+
   return map;
 }
-/* Docela jednoduché, ne?
-/* Jak říkám, programovat zvládne každý, stačí chtít.
-/*
-/* Hmm... Ok, pár věcí jsem zatajil. Vlastně všechno.
-/*
-/*
-/*
-/*
-/*
-/*
-/*
-/*
-*/
+
+// colours
+// green #14640A
+// yellow #FBF84F
+// brown #6B030A
+var elevationPalette = chroma.scale(['14640a','fbf84f','6b030a']).colors(MAX_ELEVATION-Math.floor(MAX_ELEVATION/10)+1)
+
 
 
 function shuffle(array) {
@@ -142,19 +100,28 @@ class Hexagon {
 
   //  this.context.stroke()
 
-    var color = RADIUS * 2 + 1
-    var red = Math.floor(255/color * ( + RADIUS))
-    var blue = Math.floor(255/color * (this.y + RADIUS))
-    var green = Math.floor(255/color * (this.z + RADIUS))
-
-    this.context.fillStyle = 'rgb(' + red + ', ' + blue + ', ' + green + ')'
+    // var color = RADIUS * 2 + 1
+    // var red = Math.floor(255/color * ( + RADIUS))
+    // var blue = Math.floor(255/color * (this.y + RADIUS))
+    // var green = Math.floor(255/color * (this.z + RADIUS))
+    //
+    // this.context.fillStyle = 'rgb(' + red + ', ' + blue + ', ' + green + ')'
+    //
+    // if (this.elevation != null) {
+    //   var shade = Math.floor(255/MAX_ELEVATION*this.elevation)
+    //   this.context.fillStyle = 'rgb(' + shade + ', ' + shade + ', ' + shade + ')'
+    //   if(this.elevation < 50){
+    //
+    //   }
+    //   if(this.elevation == Math.floor(MAX_ELEVATION/10)){
+    //     this.context.fillStyle = '#273ecc'
+    //   }
+    // }
 
     if (this.elevation != null) {
-      var shade = Math.floor(255/MAX_ELEVATION*this.elevation)
-      this.context.fillStyle = 'rgb(' + shade + ', ' + shade + ', ' + shade + ')'
-      if(this.elevation < 50){
+      this.context.fillStyle = elevationPalette[this.elevation-Math.floor(MAX_ELEVATION/10)]
 
-      }
+
       if(this.elevation == Math.floor(MAX_ELEVATION/10)){
         this.context.fillStyle = '#273ecc'
       }
