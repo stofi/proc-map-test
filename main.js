@@ -15,8 +15,16 @@ function main(){
   var ctx = canvas.getContext('2d')
   init(ctx, SEED)
   ui(ctx)
+  rangeDisplay()
 }
 
+function rangeDisplay() {
+  document.querySelectorAll('input[type=range]').forEach((el)=>{
+  el.addEventListener('change',(e)=>{
+  e.target.dataset.value=e.target.value
+},false)
+})
+}
 
 function init(ctx) {
   Math.seedrandom(SEED);

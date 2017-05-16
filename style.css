@@ -1,0 +1,79 @@
+body{
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #273ecc
+}
+.container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%
+}
+canvas{
+  transform-origin: center;
+  transform: scale(.5);
+}
+.ui-container{
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  transform: rotate3d(0,0,0);
+}
+.button-open{
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  height: 20px;
+  width: 20px;
+}
+.button-close{
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  height: 20px;
+  width: 20px;
+  border-radius: 5px;
+  text-align: center;
+}
+.ui{
+  display: none;
+  border-radius: 5px;
+  width: 100%;
+  max-width: 200px;
+}
+.button-close, .ui{
+  background-color: rgba(150, 150, 150, 0.5)
+}
+.ui-container.open .ui{
+  display: block;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.ui-container.open .button-open{
+  display: none;
+}
+.ui input{
+  width: 100%;
+}
+input[disabled]{
+  opacity: .5;
+}
+input[type=range]{
+  position: relative;
+  display: block;
+}
+input[type=range]::after{
+  content:attr(data-value);
+  display: block;
+  position: absolute;
+  left: auto;
+  right: 0;
+  top: -1.5em;
+  color: black;
+}
