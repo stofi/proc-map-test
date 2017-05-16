@@ -1,40 +1,74 @@
 'use strict'
 
-const RADIUS = 21,          // Radius of the hexagonal map
-      MAX_ELEVATION = 100,  // Number of possible elevations
-      ELEVATION_STEP = .1,  // 0 - table mountain island, 1 isolated peaks
-      RANDOMNESS = .2,      // 0 - very rough and diconected shapes, 1 - smooth continuous islands
-      SIZE = 20             // Radius of one hex in px
+var   RADIUS = 21,          // Radius of the hexagonal map
+      MAX_ELEVATION = 256,  // Number of possible elevations
+      ELEVATION_STEP = .2,  // 0 - table mountain island, 1 isolated peaks
+      RANDOMNESS = .5,      // 0 - very rough and diconected shapes, 1 - smooth continuous islands
+      SIZE = 20,            // Radius of one hex in px
+      PALETTE = chroma.scale(['14640a','fbf84f','6b030a']).colors(MAX_ELEVATION),
+      PEAKS = 3,
+      SEED = Math.floor(Math.random()*1000).toString(16)+'land'
 
-function main() {
 
+function main(){
   var canvas = document.getElementById('canvas')
-
   var ctx = canvas.getContext('2d')
+  init(ctx, SEED)
+  ui(ctx)
+}
+
+
+function init(ctx) {
+  Math.seedrandom(SEED);
 
   var map = new Map(RADIUS, ctx)
 
-
-  map.randomFlat().elevation = MAX_ELEVATION
-  map.randomFlat().elevation = MAX_ELEVATION
-  map.randomFlat().elevation = MAX_ELEVATION
-  map.randomFlat().elevation = MAX_ELEVATION
-  map.randomFlat().elevation = MAX_ELEVATION
-  // 💦
-
+  map.addNRandomPeaks(PEAKS);
   map.elevateAll()
-
   map.draw(SIZE)
 
-  return map;
 }
 
-// colours
-// green #14640A
-// yellow #FBF84F
-// brown #6B030A
-var elevationPalette = chroma.scale(['14640a','fbf84f','6b030a']).colors(MAX_ELEVATION-Math.floor(MAX_ELEVATION/10)+1)
+function ui(ctx) {
+    var container = document.querySelector('.ui-container')
+    var open = document.querySelector('.button-open')
+    var close = document.querySelector('.button-close')
+    open.addEventListener('click', function(){
+      container.classList.add('open')
+      console.log('test');
+    }, false)
+    close.addEventListener('click', function(){
+      container.classList.remove('open')
+    }, false)
 
+    var generate = document.getElementsByName('generate')[0]
+    var f_radius = document.getElementsByName('radius')[0]
+    var f_elevation = document.getElementsByName('elevation')[0]
+    var f_step = document.getElementsByName('step')[0]
+    var f_roughness = document.getElementsByName('roughness')[0]
+    var f_size = document.getElementsByName('size')[0]
+    var f_seed = document.getElementsByName('seed')[0]
+    var f_peaks = document.getElementsByName('peaks')[0]
+    f_radius.value = RADIUS
+    f_elevation.value = MAX_ELEVATION
+    f_step.value = ELEVATION_STEP
+    f_roughness.value = RANDOMNESS
+    f_size.value = SIZE
+    f_peaks.value = PEAKS
+    f_seed.value = SEED
+
+    generate.addEventListener('click',function() {
+        RADIUS = parseInt(f_radius.value)
+        MAX_ELEVATION = parseInt(f_elevation.value)
+        ELEVATION_STEP = parseFloat(f_step.value)
+        RANDOMNESS = parseFloat(f_roughness.value)
+        SIZE = parseInt(f_size.value)
+        PALETTE = chroma.scale(['14640a','fbf84f','6b030a']).colors(MAX_ELEVATION)
+        SEED = f_seed.value
+        PEAKS = parseInt(f_peaks.value)
+        init(ctx)
+    }, false)
+}
 
 
 function shuffle(array) {
@@ -46,18 +80,17 @@ function shuffle(array) {
   return a;
 }
 
-function MyError(message) {
-  this.name = 'err';
-  this.message = message;
-  this.stack = (new Error()).stack;
+function degToRad(deg) {
+  return Math.PI / 180 * deg
 }
 
 
 class Hexagon {
-  constructor(x,y,z, context, parent) {
+  constructor(x,y,z, context, parent, id) {
     this.x = x
     this.y = y
     this.z = z
+    this.id = id
     this.elevation = null
     this.context = context
     this.parent = parent
@@ -65,12 +98,14 @@ class Hexagon {
 
   draw(size){
     this.context.save()
+
+    // Start from the center
     this.context.translate(this.context.canvas.clientWidth/2, this.context.canvas.clientHeight/2)
 
-
-    // Z axis
+    // translare by coordinates
+    // on Z axis
     this.context.translate(this.z*(size*(5/6)), this.z*(size*1.5))
-    // X axis
+    // on X axis
     this.context.translate(-this.x*(size/12)*11, this.x*(1.5*size))
     // draw hexagon
     this.drawPixels(size)
@@ -78,64 +113,45 @@ class Hexagon {
     this.context.restore()
   }
 
-  drawPixels(h){
-    var size = h*1.01
-    var angle_deg, angle_rad
-    this.context.save()
 
+  drawPixels(unit){
+    this.context.save()
     this.context.beginPath()
 
+    var size = unit*1.01 // slightly increase the size, cleans rounding artifacts
+    var angle
 
-    angle_deg = 60 + 30
-    angle_rad = Math.PI / 180 * angle_deg
-    this.context.moveTo(size * Math.cos(angle_rad), size * Math.sin(angle_rad));
+    angle = degToRad(90) // start at 90deg
+
+    this.context.moveTo(size * Math.cos(angle), size * Math.sin(angle))
 
     for (var i = 1; i < 7; i++) {
-      angle_deg = 60 * i + 30
-      angle_rad = Math.PI / 180 * angle_deg
-      this.context.lineTo(size * Math.cos(angle_rad), size * Math.sin(angle_rad));
+      // rotate by 60deg
+      angle = degToRad(60 * i + 30)
+      this.context.lineTo(size * Math.cos(angle), size * Math.sin(angle))
     }
 
     this.context.closePath()
 
-  //  this.context.stroke()
-
-    // var color = RADIUS * 2 + 1
-    // var red = Math.floor(255/color * ( + RADIUS))
-    // var blue = Math.floor(255/color * (this.y + RADIUS))
-    // var green = Math.floor(255/color * (this.z + RADIUS))
-    //
-    // this.context.fillStyle = 'rgb(' + red + ', ' + blue + ', ' + green + ')'
-    //
-    // if (this.elevation != null) {
-    //   var shade = Math.floor(255/MAX_ELEVATION*this.elevation)
-    //   this.context.fillStyle = 'rgb(' + shade + ', ' + shade + ', ' + shade + ')'
-    //   if(this.elevation < 50){
-    //
-    //   }
-    //   if(this.elevation == Math.floor(MAX_ELEVATION/10)){
-    //     this.context.fillStyle = '#273ecc'
-    //   }
-    // }
-
-    if (this.elevation != null) {
-      this.context.fillStyle = elevationPalette[this.elevation-Math.floor(MAX_ELEVATION/10)]
-
-
-      if(this.elevation == Math.floor(MAX_ELEVATION/10)){
-        this.context.fillStyle = '#273ecc'
-      }
-    }
-
+    this.context.fillStyle = this.getColor()
 
     this.context.fill()
     this.context.restore()
+  }
 
-    // this.context.fillStyle = 'white'
-    // this.context.font = '10px Courier';
-    // this.context.fillText(''+this.x, size-6, (size/3)*2+10);
-    // this.context.fillText(''+this.y, -(size/3)*2, size/2);
-    // this.context.fillText(''+this.z, (size/3)*2-12, size/2);
+  getColor(){
+    // this is ugly :(
+
+    var color = null
+
+      if(this.elevation != null && this.elevation > 0 ){
+        color = PALETTE[this.elevation-1]
+      } else {
+        color = '#273ecc'
+      }
+
+
+    return color
   }
 }
 
@@ -156,7 +172,7 @@ class Map {
       for (var y = -this.size; y <= this.size; y++) {
         for (var z = -this.size; z <= this.size; z++) {
           if ( (x+y+z) == 0 ) {
-            this.hexagons[this.hash(x,y,z)] = new Hexagon(x,y,z, this.context, this)
+            this.hexagons[this.hash(x,y,z)] = new Hexagon(x,y,z, this.context, this, this.hash(x,y,z))
             this.keys.push(this.hash(x,y,z))
           }
         }
@@ -164,7 +180,15 @@ class Map {
     }
   }
 
+  filterFlats(hex){
+    this.keysFlat = this.keysFlat.filter((key)=>{
+      return key != hex.hash
+    })
+  }
+
   waterEdges(){
+    // filter is slow, find better implementation?
+
     var hex = null
     for (var hexa in this.hexagons) {
       if (this.hexagons.hasOwnProperty(hexa)) {
@@ -175,12 +199,17 @@ class Map {
             hex.y == -this.size ||
             hex.z ==  this.size ||
             hex.z == -this.size ) {
-          hex.elevation = Math.floor(MAX_ELEVATION/10)
-          this.keysFlat = this.keysFlat.filter((key)=>{
-            return key != ("hex_"+(1000-hex.x)+(1000-hex.y)+(1000-hex.z))
-          })
+          hex.elevation = 0
+
+          this.filterFlats(hex)
         }
       }
+    }
+  }
+
+  addNRandomPeaks(n){
+    for (var i = 0; i < n; i++) {
+      this.randomFlat().elevation = MAX_ELEVATION
     }
   }
 
@@ -264,11 +293,7 @@ class Map {
     for (var i = 0; i < 10000 && this.keysFlat.length>0; i++) {
       this.elevate(this.randomFlat())
     }
-    // this.loopByGrid((h)=>{
-    //   if (h.elevation == null) {
-    //     h.elevation = Math.floor(MAX_ELEVATION/10)
-    //   }
-    // })
+
   }
 
   elevate(hex){
@@ -289,9 +314,9 @@ class Map {
         }
         if (elevation != null) {
           hex.elevation = elevation
-          if (elevation < MAX_ELEVATION/10) {
-             hex.elevation = Math.floor(MAX_ELEVATION/10)
-          }
+          // if (elevation < MAX_ELEVATION/10) {
+          //    hex.elevation = Math.floor(MAX_ELEVATION/10)
+          // }
 
           neighbours = neighbours.filter(function(neighbour){
             return neighbours.elevation == null;
@@ -307,9 +332,7 @@ class Map {
 
 
           result = true
-          this.keysFlat = this.keysFlat.filter((key)=>{
-            return key != ("hex_"+(1000-hex.x)+(1000-hex.y)+(1000-hex.z))
-          })
+          this.filterFlats(hex)
         }
 
       }
@@ -319,4 +342,4 @@ class Map {
 
 }
 
-var m = main()
+main()

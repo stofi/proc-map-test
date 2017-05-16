@@ -8,6 +8,11 @@
     Chroma.js operations with colours super easy.
     https://github.com/gka/chroma.js
     -->
+    <script src="seedrandom.min.js" charset="utf-8"></script>
+    <!--
+    Using seedable Math.random replacement by David Bau
+    http://davidbau.com/archives/2010/01/30/random_seeds_coded_hints_and_quintillions.html
+    -->
   </head>
   <style media="screen">
     body{
@@ -28,8 +33,83 @@
       transform-origin: center;
       transform: scale(.5);
     }
+    .ui-container{
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      transform: rotate3d(0,0,0);
+    }
+    .button-open{
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: pointer;
+      height: 20px;
+      width: 20px;
+    }
+    .button-close{
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: pointer;
+      height: 20px;
+      width: 20px;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .ui{
+      display: none;
+      border-radius: 5px;
+      width: 100%;
+      max-width: 200px;
+    }
+    .button-close, .ui{
+      background-color: rgba(150, 150, 150, 0.5)
+    }
+    .ui-container.open .ui{
+      display: block;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .ui-container.open .button-open{
+      display: none;
+    }
+    .ui input{
+      width: 100%;
+    }
+    input[disabled]{
+      opacity: .5;
+    }
   </style>
   <body>
+    <div class="ui-container">
+      <div class="button-open">
+
+      </div>
+      <div class="ui">
+        <div class="button-close">
+          &times;
+        </div>
+
+          <label for="radius">radius</label>
+          <input disabled type="range" name="radius" value="" min="1" max="42" step="1">
+          <label for="radius">elevation</label>
+          <input type="range" name="elevation" value="" min="1" max="512" step="1">
+          <label for="step">step</label>
+          <input type="range" name="step" value="" min="0" max="1" step="0.01">
+          <label for="roughness">roughness</label>
+          <input type="range" name="roughness" value="" min="0" max="1" step="0.01">
+          <label for="peaks">peaks</label>
+          <input type="range" name="peaks" value="" min="0" max="20" step="1">
+          <label for="size">size</label>
+          <input disabled type="range" name="size" value="" min="1" max="100" step="1">
+          <label for="seed">land</label>
+          <input type="text" name="seed" value="">
+          <input type="button" name="generate" value="generate">
+
+      </div>
+    </div>
     <div class="container">
       <canvas id="canvas" width="1800" height="1800"></canvas>
     </div>
